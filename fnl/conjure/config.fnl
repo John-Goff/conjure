@@ -50,11 +50,12 @@
   {:debug false
    :relative_file_root nil
 
-   :filetypes [:clojure :fennel :janet :racket]
+   :filetypes [:clojure :fennel :janet :racket :lfe]
    :filetype {:fennel :conjure.client.fennel.aniseed
               :racket :conjure.client.racket.stdio
               :clojure :conjure.client.clojure.nrepl
-              :janet :conjure.client.janet.netrepl}
+              :janet :conjure.client.janet.netrepl
+              :lfe :conjure.client.lfe.stdio}
 
    :eval
    {:result_register "c"
