@@ -62,7 +62,7 @@
   (eval-str (a.assoc opts :code (.. ",require-reloadable " opts.file-path))))
 
 (defn doc-str [opts]
-  (eval-str (a.update opts :code #(.. ",doc " $1))))
+  (eval-str (a.update opts :code #(.. "(doc " $1 ")\n"))))
 
 (defn- display-repl-status [status]
   (let [repl (state :repl)]

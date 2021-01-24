@@ -185,7 +185,7 @@ do
     local v_0_0 = nil
     local function doc_str0(opts)
       local function _3_(_241)
-        return (",doc " .. _241)
+        return ("(doc " .. _241 .. ")\n")
       end
       return eval_str(a.update(opts, "code", _3_))
     end
