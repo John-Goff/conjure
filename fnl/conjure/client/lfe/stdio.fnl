@@ -16,8 +16,8 @@
     {:stdio
      {:mapping {:start "cs"
                 :stop "cS"}
-      :command "racket"
-      :prompt-pattern "\n?[\"%w%-./_]*> "}}}})
+      :command "rebar3 lfe repl"
+      :prompt-pattern "\n?[\"%w%-=>./_]*lfe> "}}}})
 
 (def- cfg (config.get-in-fn [:client :lfe :stdio]))
 
@@ -25,7 +25,7 @@
 
 (def buf-suffix ".lfe")
 (def comment-prefix "; ")
-(def context-pattern "%(%s*module%s+(.-)[%s){]")
+(def context-pattern "%(%s*defmodule%s+(.-)[%s){]")
 
 (defn- with-repl-or-warn [f opts]
   (let [repl (state :repl)]
@@ -41,15 +41,8 @@
     (->> (format-message msg)
          (a.filter #(not (= "" $1))))))
 
-(defn- prep-code [s]
-  (let [lang-line-pat "#lang [^%s]+"
-        code
-        (if (s:match lang-line-pat)
-          (do
-            (log.append [(.. comment-prefix "Dropping #lang, only supported in file evaluation.")])
-            (s:gsub lang-line-pat ""))
-          s)]
-    (.. code "\n(flush-output)")))
+(defn- prep-code [code]
+    (.. code "\n(flush)"))
 
 (defn eval-str [opts]
   (with-repl-or-warn
@@ -129,10 +122,10 @@
 
 (defn on-load []
   (augroup
-    conjure-racket-stdio-bufenter
+    conjure-lfe-stdio-bufenter
     (autocmd :BufEnter (.. :* buf-suffix) (viml->fn :enter)))
   (start))
 
 (defn on-filetype []
-  (mapping.buf :n :RktStart (cfg [:mapping :start]) *module-name* :start)
-  (mapping.buf :n :RktStop (cfg [:mapping :stop]) *module-name* :stop))
+  (mapping.buf :n :LfeStart (cfg [:mapping :start]) *module-name* :start)
+  (mapping.buf :n :LfeStop (cfg [:mapping :stop]) *module-name* :stop))
