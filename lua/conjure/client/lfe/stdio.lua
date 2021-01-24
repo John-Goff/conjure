@@ -1,6 +1,6 @@
 local _0_0 = nil
 do
-  local name_0_ = "conjure.client.fennel.stdio"
+  local name_0_ = "conjure.client.lfe.stdio"
   local loaded_0_ = package.loaded[name_0_]
   local module_0_ = nil
   if ("table" == type(loaded_0_)) then
@@ -38,12 +38,12 @@ local stdio = _1_[7]
 local str = _1_[8]
 local text = _1_[9]
 local _2amodule_2a = _0_0
-local _2amodule_name_2a = "conjure.client.fennel.stdio"
+local _2amodule_name_2a = "conjure.client.lfe.stdio"
 do local _ = ({nil, _0_0, {{nil}, nil, nil, nil}})[2] end
-config.merge({client = {fennel = {stdio = {["prompt-pattern"] = ">> ", command = "fennel", mapping = {["eval-reload"] = "eF", start = "cs", stop = "cS"}}}}})
+config.merge({client = {lfe = {stdio = {["prompt-pattern"] = "\n?[\"%w%-=>./_]*lfe> ", command = "rebar3 lfe repl", mapping = {start = "cs", stop = "cS"}}}}})
 local cfg = nil
 do
-  local v_0_ = config["get-in-fn"]({"client", "fennel", "stdio"})
+  local v_0_ = config["get-in-fn"]({"client", "lfe", "stdio"})
   _0_0["aniseed/locals"]["cfg"] = v_0_
   cfg = v_0_
 end
@@ -61,7 +61,7 @@ local buf_suffix = nil
 do
   local v_0_ = nil
   do
-    local v_0_0 = ".fnl"
+    local v_0_0 = ".lfe"
     _0_0["buf-suffix"] = v_0_0
     v_0_ = v_0_0
   end
@@ -78,6 +78,17 @@ do
   end
   _0_0["aniseed/locals"]["comment-prefix"] = v_0_
   comment_prefix = v_0_
+end
+local context_pattern = nil
+do
+  local v_0_ = nil
+  do
+    local v_0_0 = "%(%s*defmodule%s+(.-)[%s){]"
+    _0_0["context-pattern"] = v_0_0
+    v_0_ = v_0_0
+  end
+  _0_0["aniseed/locals"]["context-pattern"] = v_0_
+  context_pattern = v_0_
 end
 local with_repl_or_warn = nil
 do
@@ -117,6 +128,16 @@ do
   _0_0["aniseed/locals"]["display-result"] = v_0_
   display_result = v_0_
 end
+local prep_code = nil
+do
+  local v_0_ = nil
+  local function prep_code0(code)
+    return (code .. "\n(flush)")
+  end
+  v_0_ = prep_code0
+  _0_0["aniseed/locals"]["prep-code"] = v_0_
+  prep_code = v_0_
+end
 local eval_str = nil
 do
   local v_0_ = nil
@@ -128,17 +149,10 @@ do
           if ((1 == a.count(msgs)) and ("" == a["get-in"](msgs, {1, "out"}))) then
             a["assoc-in"](msgs, {1, "out"}, (comment_prefix .. "Empty result."))
           end
-          local msgs0 = nil
-          local function _6_(_241)
-            return (".." ~= _241.out)
-          end
-          msgs0 = a.filter(_6_, msgs)
-          if opts["on-result"] then
-            opts["on-result"](str.join("\n", format_message(a.last(msgs0))))
-          end
-          return a["run!"](display_result, msgs0)
+          opts["on-result"](str.join("\n", format_message(a.last(msgs))))
+          return a["run!"](display_result, msgs)
         end
-        return repl.send((opts.code .. "\n"), _4_, {["batch?"] = true})
+        return repl.send(prep_code(opts.code), _4_, {["batch?"] = true})
       end
       return with_repl_or_warn(_3_)
     end
@@ -155,7 +169,7 @@ do
   do
     local v_0_0 = nil
     local function eval_file0(opts)
-      return eval_str(a.assoc(opts, "code", a.slurp(opts["file-path"])))
+      return eval_str(a.assoc(opts, "code", (",require-reloadable " .. opts["file-path"])))
     end
     v_0_0 = eval_file0
     _0_0["eval-file"] = v_0_0
@@ -164,24 +178,6 @@ do
   _0_0["aniseed/locals"]["eval-file"] = v_0_
   eval_file = v_0_
 end
-local eval_reload = nil
-do
-  local v_0_ = nil
-  do
-    local v_0_0 = nil
-    local function eval_reload0()
-      local file_path = nvim.fn.expand("%")
-      local module_path = nvim.fn.fnamemodify(file_path, ":.:r")
-      log.append({(comment_prefix .. ",reload " .. module_path)}, {["break?"] = true})
-      return eval_str({["file-path"] = file_path, action = "eval", code = (",reload " .. module_path), origin = "reload"})
-    end
-    v_0_0 = eval_reload0
-    _0_0["eval-reload"] = v_0_0
-    v_0_ = v_0_0
-  end
-  _0_0["aniseed/locals"]["eval-reload"] = v_0_
-  eval_reload = v_0_
-end
 local doc_str = nil
 do
   local v_0_ = nil
@@ -189,7 +185,7 @@ do
     local v_0_0 = nil
     local function doc_str0(opts)
       local function _3_(_241)
-        return ("(doc " .. _241 .. ")\n")
+        return (",doc " .. _241)
       end
       return eval_str(a.update(opts, "code", _3_))
     end
@@ -233,6 +229,27 @@ do
   _0_0["aniseed/locals"]["stop"] = v_0_
   stop = v_0_
 end
+local enter = nil
+do
+  local v_0_ = nil
+  do
+    local v_0_0 = nil
+    local function enter0()
+      local repl = state("repl")
+      local path = nvim.fn.expand("%:p")
+      if (repl and not log["log-buf?"](path)) then
+        local function _3_()
+        end
+        return repl.send(prep_code((",enter " .. path)), _3_)
+      end
+    end
+    v_0_0 = enter0
+    _0_0["enter"] = v_0_0
+    v_0_ = v_0_0
+  end
+  _0_0["aniseed/locals"]["enter"] = v_0_
+  enter = v_0_
+end
 local start = nil
 do
   local v_0_ = nil
@@ -240,7 +257,7 @@ do
     local v_0_0 = nil
     local function start0()
       if state("repl") then
-        return log.append({(comment_prefix .. "Can't start, REPL is already running."), (comment_prefix .. "Stop the REPL with " .. config["get-in"]({"mapping", "prefix"}) .. cfg({"mapping", "stop"}))}, {["break?"] = true})
+        return log.append({"; Can't start, REPL is already running.", ("; Stop the REPL with " .. config["get-in"]({"mapping", "prefix"}) .. cfg({"mapping", "stop"}))}, {["break?"] = true})
       else
         local function _3_(err)
           return display_repl_status(err)
@@ -258,7 +275,8 @@ do
           return display_result(msg)
         end
         local function _6_()
-          return display_repl_status("started")
+          display_repl_status("started")
+          return enter()
         end
         return a.assoc(state(), "repl", stdio.start({["on-error"] = _3_, ["on-exit"] = _4_, ["on-stray-output"] = _5_, ["on-success"] = _6_, ["prompt-pattern"] = cfg({"prompt-pattern"}), cmd = cfg({"command"})}))
       end
@@ -276,6 +294,12 @@ do
   do
     local v_0_0 = nil
     local function on_load0()
+      do
+        nvim.ex.augroup("conjure-lfe-stdio-bufenter")
+        nvim.ex.autocmd_()
+        nvim.ex.autocmd("BufEnter", ("*" .. buf_suffix), ("lua require('" .. _2amodule_name_2a .. "')['" .. "enter" .. "']()"))
+        nvim.ex.augroup("END")
+      end
       return start()
     end
     v_0_0 = on_load0
@@ -291,9 +315,8 @@ do
   do
     local v_0_0 = nil
     local function on_filetype0()
-      mapping.buf("n", "FnlStart", cfg({"mapping", "start"}), _2amodule_name_2a, "start")
-      mapping.buf("n", "FnlStop", cfg({"mapping", "stop"}), _2amodule_name_2a, "stop")
-      return mapping.buf("n", "FnlEvalReload", cfg({"mapping", "eval-reload"}), _2amodule_name_2a, "eval-reload")
+      mapping.buf("n", "LfeStart", cfg({"mapping", "start"}), _2amodule_name_2a, "start")
+      return mapping.buf("n", "LfeStop", cfg({"mapping", "stop"}), _2amodule_name_2a, "stop")
     end
     v_0_0 = on_filetype0
     _0_0["on-filetype"] = v_0_0
